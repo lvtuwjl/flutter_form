@@ -38,6 +38,7 @@ class _MyFormState extends State<MyForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isObscure = true; // 控制密码是否隐藏
 
   @override
   Widget build(BuildContext context) {
@@ -69,10 +70,21 @@ class _MyFormState extends State<MyForm> {
                 },
               ),
               TextFormField(
+                obscureText: _isObscure,
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: '密码',
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isObscure ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isObscure = !_isObscure;
+                      });
+                    },
+                  ),
                 ),
                 validator: (value) {
                   if (value!.isEmpty || value.length < 6) {
