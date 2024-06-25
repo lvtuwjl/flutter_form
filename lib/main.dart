@@ -75,7 +75,7 @@ class _MyFormState extends State<MyForm> {
                   prefixIcon: Icon(Icons.lock),
                 ),
                 validator: (value) {
-                  if (value!.isEmpty) {
+                  if (value!.isEmpty || value.length < 6) {
                     return 'Please enter your password';
                   }
                   return null;
