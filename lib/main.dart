@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,11 +21,21 @@ class MyApp extends StatelessWidget {
 }
 
 /// More examples see https://github.com/cfug/dio/blob/main/example
-Future<void> login(Map<String, dynamic> data) async {
+Future<dynamic> login(Map<String, dynamic> data) async {
   print("login request body: $data");
   final dio = Dio();
   final response = await dio.post('http://127.0.0.1:8084/login', data: data);
   print(response.data);
+  return response.data;
+}
+
+/// More examples see https://github.com/cfug/dio/blob/main/example
+Future<dynamic> getInfo(Map<String, dynamic> data) async {
+  print("login request body: $data");
+  final dio = Dio();
+  final response = await dio.get('http://127.0.0.1:8084/info?userId=111');
+  print(response.data);
+  return response.data;
 }
 
 class MyForm extends StatefulWidget {
@@ -101,7 +112,23 @@ class _MyFormState extends State<MyForm> {
                   children: <Widget>[
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _submitForm,
+                        onPressed: () async {
+                          var resp = await _submitForm();
+                          // print("object: resp: ${resp == null}");
+                          // print("object: resp: ${resp is Map}");
+                          assert(resp is Map);
+                          if (resp == null) {
+                            print("resp is null");
+                            return;
+                          }
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (context) {
+                              return UserInfoPage(
+                                data: resp,
+                              );
+                            }),
+                          );
+                        },
                         child: const Padding(
                           padding: EdgeInsets.all(16.0),
                           child: Text("登录"),
@@ -110,7 +137,26 @@ class _MyFormState extends State<MyForm> {
                     ),
                   ],
                 ),
-              )
+              ),
+              const SizedBox(
+                height: 50,
+              ),
+              // //顺便提一下，设置圆角边框，可以使用Container的decoration功能
+              // Container(
+              //   width: 400,
+              //   height: 200,
+              //   //设置了 decoration 就不能设置color，两者只能存在一个
+              //   decoration: BoxDecoration(
+              //     border:
+              //         // Border(left: BorderSide(width: 1, color: Colors.red)),
+              //         Border.all(),
+              //     borderRadius:
+              //         const BorderRadius.only(topLeft: Radius.circular(2)),
+              //   ),
+              //   child: const Center(
+              //     child: Text("Dart Flutter"),
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -118,15 +164,70 @@ class _MyFormState extends State<MyForm> {
     );
   }
 
-  Future<void> _submitForm() async {
+  Future<dynamic> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       // 表单验证成功
       final String name = _nameController.text;
       final String password = _passwordController.text;
-
+      // await Future.delayed(Duration(seconds: 2));
       // 构建请求参数
       final Map<String, dynamic> data = {'name': name, 'password': password};
-      await login(data);
+      var resp = await getInfo(data);
+      return resp;
     }
+    return null;
+  }
+}
+
+class UserInfoPage extends StatelessWidget {
+  final Map? data;
+  const UserInfoPage({super.key, this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    var keys = data!['data'].keys.toList();
+    print("info length: ${data!['data'].length}");
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("New Page 1"),
+      ),
+      // drawer: const Drawer(),
+      body: Center(
+        child: Container(
+          // height: 200,
+          child: GridView.builder(
+            scrollDirection: Axis.vertical,
+            itemBuilder: (BuildContext context, int index) {
+              var key = keys[index];
+              var value = data!['data'][key];
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListTile(
+                      title: Text("$key"),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.all(1),
+                        child: Text("$value"),
+                      ),
+                    ),
+                  ),
+                  // const SizedBox(
+                  //   height: 41,
+                  // ),
+                  Divider(
+                    color: Colors.green.shade300,
+                  ),
+                ],
+              );
+            },
+            itemCount: data!['data'].length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, //每行三列
+              childAspectRatio: 2.0, //显示区域宽高2:1
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
